@@ -25,6 +25,12 @@ public class KafkaBroker implements MessageBroker<KafkaProducer<String, String>,
         adminConfig.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, host + ":" + port);
     }
 
+    public boolean doesTopicExist(String topic) throws InterruptedException, ExecutionException {
+        var adminClient = AdminClient.create(adminConfig);
+        var topics = adminClient.listTopics().names().get();
+        return topics.contains(topic);
+    }
+
     public void createTopic(String topic, int numPartitions, short replicationFactor) throws InterruptedException, ExecutionException {
         var adminClient = AdminClient.create(adminConfig);
         this.topic = topic;

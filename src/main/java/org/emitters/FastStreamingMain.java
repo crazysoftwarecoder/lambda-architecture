@@ -13,10 +13,14 @@ public class FastStreamingMain {
     private static final Logger logger = Logger.getLogger(FastStreamingMain.class.getName());
 
     public static void main(String[] args) {
-        var eventCreator = new RetailRandomEventCreator(10);
-        var messageBroker = new KafkaBroker("localhost", 9092);
+        var eventCreator = new RetailRandomEventCreator(5);
+        var kafkaHost = System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092");
+        var messageBroker = new KafkaBroker(kafkaHost.split(":")[0], 
+                                               Integer.parseInt(kafkaHost.split(":")[1]));
         try {
-            messageBroker.createTopic("product-events", 2, (short) 1);
+            if (!messageBroker.doesTopicExist("product-events")) {
+                messageBroker.createTopic("product-events", 2, (short) 1);
+            }
         } catch (InterruptedException | ExecutionException e) {
             logger.severe("Error creating topic: " + e.getMessage());
             System.exit(1);

@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Product Events Dashboard</title>
+  <!-- Include Chart.js from a CDN -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    .chart-container {
+      width: 100%;
+      max-width: 400px; /* Reduced from 800px */
+      margin: 20px auto;
+    }
+    .input-container {
+      text-align: center;
+      margin: 20px;
+    }
+    #productId {
+      padding: 8px;
+      font-size: 16px;
+    }
+    button {
+      padding: 8px 16px;
+      font-size: 16px;
+      cursor: pointer;
+    }
+  </style>
+</head>
+<body>
+  <div class="input-container">
+    <input type="number" id="productId" placeholder="Enter Product ID">
+    <button onclick="startTracking()">Track Product</button>
+    <button onclick="stopTracking()" id="stopButton" style="display: none;">Stop Tracking</button>
+  </div>
+
+  <div class="chart-container">
+    <canvas id="viewedChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="cartChart"></canvas>
+  </div>
+  <div class="chart-container">
+    <canvas id="purchasedChart"></canvas>
+  </div>
+
+  <script>
+    let charts = {
+      viewed: null,
+      cart: null,
+      purchased: null
+    };
+    let trackingInterval;
+
+    function createOrUpdateChart(type, data) {
+      const config = {
+        type: 'bar',
+        data: {
+          labels: ['Count'],
+          datasets: [{
+            label: type,
+            data: [data],
+            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            borderColor: 'rgba(54, 162, 235, 1)',
+            borderWidth: 1
+          }]
+        },
+        options: {
+          responsive: true,
+          scales: {
+            y: {
+              beginAtZero: true
+            }
+          }
+        }
+      };
+
+      if (charts[type.toLowerCase()]) {
+        charts[type.toLowerCase()].data.datasets[0].data = [data];
+        charts[type.toLowerCase()].update();
+      } else {
+        const ctx = document.getElementById(type.toLowerCase() + 'Chart').getContext('2d');
+        charts[type.toLowerCase()] = new Chart(ctx, config);
+      }
+    }
+
+    function updateCharts(productId) {
+      fetch(`/api/product/${productId}`)
+        .then(response => response.json())
+        .then(data => {
+          createOrUpdateChart('viewed', data.viewed_count);
+          createOrUpdateChart('cart', data.cart_count);
+          createOrUpdateChart('purchased', data.purchased_count);
+        })
+        .catch(console.error);
+    }
+
+    function startTracking() {
+      const productId = document.getElementById('productId').value;
+      if (!productId) {
+        alert('Please enter a Product ID');
+        return;
+      }
+
+      // Clear existing interval if any
+      if (trackingInterval) {
+        clearInterval(trackingInterval);
+      }
+
+      // Show stop button
+      document.getElementById('stopButton').style.display = 'inline-block';
+
+      // Initial update
+      updateCharts(productId);
+
+      // Set up interval for updates
+      trackingInterval = setInterval(() => {
+        updateCharts(productId);
+      }, 5000);
+    }
+
+    function stopTracking() {
+      if (trackingInterval) {
+        clearInterval(trackingInterval);
+        trackingInterval = null;
+      }
+      document.getElementById('stopButton').style.display = 'none';
+    }
+  </script>
+</body>
+</html>
