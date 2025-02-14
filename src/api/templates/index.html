@@ -48,37 +48,65 @@
       cart: null,
       purchased: null
     };
+    let chartData = {
+      viewed: { labels: [], data: [] },
+      cart: { labels: [], data: [] },
+      purchased: { labels: [], data: [] }
+    };
     let trackingInterval;
 
-    function createOrUpdateChart(type, data) {
+    function createOrUpdateChart(type, value) {
+      const timestamp = new Date().toLocaleTimeString();
+      chartData[type].labels.push(timestamp);
+      chartData[type].data.push(value);
+
+      // Keep last 20 data points
+      if (chartData[type].labels.length > 20) {
+        chartData[type].labels.shift();
+        chartData[type].data.shift();
+      }
+
       const config = {
-        type: 'bar',
+        type: 'line',
         data: {
-          labels: ['Count'],
+          labels: chartData[type].labels,
           datasets: [{
-            label: type,
-            data: [data],
-            backgroundColor: 'rgba(54, 162, 235, 0.5)',
+            label: type.charAt(0).toUpperCase() + type.slice(1),
+            data: chartData[type].data,
             borderColor: 'rgba(54, 162, 235, 1)',
-            borderWidth: 1
+            backgroundColor: 'rgba(54, 162, 235, 0.1)',
+            tension: 0.4,
+            fill: true
           }]
         },
         options: {
           responsive: true,
           scales: {
             y: {
-              beginAtZero: true
+              beginAtZero: true,
+              ticks: {
+                stepSize: 1
+              }
+            }
+          },
+          animation: {
+            duration: 0 // Disable animation for better performance
+          },
+          plugins: {
+            title: {
+              display: true,
+              text: type.charAt(0).toUpperCase() + type.slice(1) + ' Events'
             }
           }
         }
       };
 
-      if (charts[type.toLowerCase()]) {
-        charts[type.toLowerCase()].data.datasets[0].data = [data];
-        charts[type.toLowerCase()].update();
+      if (charts[type]) {
+        charts[type].data = config.data;
+        charts[type].update('none'); // Update without animation
       } else {
-        const ctx = document.getElementById(type.toLowerCase() + 'Chart').getContext('2d');
-        charts[type.toLowerCase()] = new Chart(ctx, config);
+        const ctx = document.getElementById(type + 'Chart').getContext('2d');
+        charts[type] = new Chart(ctx, config);
       }
     }
 
@@ -99,6 +127,12 @@
         alert('Please enter a Product ID');
         return;
       }
+
+      // Reset chart data
+      Object.keys(chartData).forEach(type => {
+        chartData[type].labels = [];
+        chartData[type].data = [];
+      });
 
       // Clear existing interval if any
       if (trackingInterval) {
