@@ -93,23 +93,5 @@ services:
       interval: 10s
       timeout: 5s
       retries: 3
-
-  streaming:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    environment:
-      - KAFKA_BOOTSTRAP_SERVERS=kafka:29092
-      - POSTGRES_HOST=postgres
-      - POSTGRES_DB=postgres
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-    depends_on:
-      api:
-        condition: service_healthy
-      kafka:
-        condition: service_started
-      postgres:
-        condition: service_healthy
 volumes:
   postgres_data:

@@ -25,7 +25,7 @@ public class FastStreamingMain {
             logger.severe("Error creating topic: " + e.getMessage());
             System.exit(1);
         }
-        var emitter = new MessageBrokerEventEmitter(eventCreator, messageBroker, 5);
+        var emitter = new MessageBrokerEventEmitter(eventCreator, messageBroker, 1);
 
         
         Thread emitterThread = new Thread(() -> {

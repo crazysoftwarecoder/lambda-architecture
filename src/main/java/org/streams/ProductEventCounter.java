@@ -19,12 +19,16 @@ public class ProductEventCounter {
         SparkSession spark = SparkSession.builder()
         .appName("EventCount")
         .master("local[*]")
+        .config("spark.driver.host", "127.0.0.1")
+        .config("spark.driver.bindAddress", "127.0.0.1")
+        .config("spark.executor.memory", "512m")
+        .config("spark.driver.memory", "512m")
         .getOrCreate();
 
         // Read streaming data from Kafka
         Dataset<Row> kafkaDF = spark.readStream()
                 .format("kafka")
-                .option("kafka.bootstrap.servers", "localhost:9092")
+                .option("kafka.bootstrap.servers", System.getenv().getOrDefault("KAFKA_BOOTSTRAP_SERVERS", "localhost:9092"))
                 .option("subscribe", "product-events")
                 .load()
                 .select(
